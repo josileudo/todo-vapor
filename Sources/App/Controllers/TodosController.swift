@@ -15,11 +15,13 @@ struct TodosController: RouteCollection {
         let api = routes.grouped("api")
         
         // POST: /api/todos
-        api.post("todos", use: create)
+        api.post("todos", use: createTodo)
         // GET: /api/todos
         api.get("todos", use: getAll)
         // GET: /api/todos/:todoId
         api.get("todos", ":todoId", use: getById)
+        // DELETE: /api/todos/:todoId
+        api.delete("todos", ":todoId", use: deleteTodo)
     }
     
     func getAll(req: Request) async throws -> [Todo] {
@@ -38,10 +40,22 @@ struct TodosController: RouteCollection {
         return todo
     }
     
-    func create(req: Request) async throws -> Todo {
-        
+    func createTodo(req: Request) async throws -> Todo {
         let todo = try req.content.decode(Todo.self)
         try await todo.save(on: req.db)
+        return todo
+    }
+    
+    func deleteTodo(req: Request) async throws -> Todo {
+        guard let todoId = req.parameters.get("todoId", as: UUID.self) else {
+            throw Abort(.notFound)
+        }
+        
+        guard let todo = try await Todo.find(todoId, on: req.db) else {
+            throw Abort(.notFound, reason: "TodoID \(todoId) war not found.")
+        }
+        
+        try await todo.delete(on: req.db)
         
         return todo
     }
