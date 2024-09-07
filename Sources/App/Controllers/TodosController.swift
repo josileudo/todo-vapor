@@ -22,6 +22,8 @@ struct TodosController: RouteCollection {
         api.get("todos", ":todoId", use: getById)
         // DELETE: /api/todos/:todoId
         api.delete("todos", ":todoId", use: deleteTodo)
+        // PUT: /api/todos/:todoId
+        api.put("todos", ":todoId", use: updateTodo)
     }
     
     func getAll(req: Request) async throws -> [Todo] {
@@ -56,6 +58,23 @@ struct TodosController: RouteCollection {
         }
         
         try await todo.delete(on: req.db)
+        
+        return todo
+    }
+    
+    func updateTodo(req: Request) async throws -> Todo {
+        guard let todoId = req.parameters.get("todoId", as: UUID.self) else {
+            throw Abort(.notFound)
+        }
+        guard let todo = try await Todo.find(todoId, on: req.db) else {
+            throw Abort(.notFound, reason: "TodoId \(todoId) was not found")
+        }
+        
+        let updateTodo = try req.content.decode(Todo.self)
+        todo.description = updateTodo.description
+        todo.checked = updateTodo.checked
+        
+        try await todo.update(on: req.db)
         
         return todo
     }
