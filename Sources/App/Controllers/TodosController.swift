@@ -6,3 +6,43 @@
 //
 
 import Foundation
+import Vapor
+import Fluent
+import FluentMongoDriver
+
+struct TodosController: RouteCollection {
+    func boot (routes: RoutesBuilder) throws {
+        let api = routes.grouped("api")
+        
+        // POST: /api/todos
+        api.post("todos", use: create)
+        // GET: /api/todos
+        api.get("todos", use: getAll)
+        // GET: /api/todos/:todoId
+        api.get("todos", ":todoId", use: getById)
+    }
+    
+    func getAll(req: Request) async throws -> [Todo] {
+        return try await Todo.query(on: req.db).all()
+    }
+    
+    func getById(req: Request) async throws -> Todo {
+        guard let todoId = req.parameters.get("todoId", as: UUID.self) else {
+            throw Abort(.notFound)
+        }
+        
+        guard let todo = try await Todo.find(todoId, on: req.db) else {
+            throw Abort(.notFound, reason: "TodoId \(todoId) was not found.")
+        }
+        
+        return todo
+    }
+    
+    func create(req: Request) async throws -> Todo {
+        
+        let todo = try req.content.decode(Todo.self)
+        try await todo.save(on: req.db)
+        
+        return todo
+    }
+}

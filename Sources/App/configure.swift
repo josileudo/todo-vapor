@@ -1,9 +1,16 @@
 import Vapor
+import Fluent
+import FluentMongoDriver
 
 // configures your application
 public func configure(_ app: Application) async throws {
-    // uncomment to serve files from /Public folder
-    // app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
+    try app.databases.use(.mongo(
+        connectionString: "mongodb+srv://Username123:Password123$@todo.eoxtf.mongodb.net/toDO?retryWrites=true&w=majority&appName=ToDO"
+    ), as: .mongo)
+    
+    // register controllers
+    try app.register(collection: TodosController())
+    
     // register routes
     try routes(app)
 }
