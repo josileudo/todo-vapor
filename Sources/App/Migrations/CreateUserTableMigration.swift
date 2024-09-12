@@ -9,7 +9,7 @@ import Foundation
 import Fluent
 import Vapor
 
-struct CreateUserTableMigrations: AsyncMigration {
+struct CreateUserTableMigration: AsyncMigration {
     func prepare(on database: FluentKit.Database) async throws {
         try await database.schema("users")
             .id()
