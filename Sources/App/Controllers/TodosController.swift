@@ -12,7 +12,7 @@ import FluentMongoDriver
 
 struct TodosController: RouteCollection {
     func boot (routes: RoutesBuilder) throws {
-        let api = routes.grouped("api")
+        let api = routes.grouped("api" , "todos")
         
         // POST: /api/todos
         api.post("todos", use: createTodo)
@@ -26,11 +26,11 @@ struct TodosController: RouteCollection {
         api.put("todos", ":todoId", use: updateTodo)
     }
     
-    func getAll(req: Request) async throws -> [Todo] {
+    @Sendable func getAll(req: Request) async throws -> [Todo] {
         return try await Todo.query(on: req.db).all()
     }
     
-    func getById(req: Request) async throws -> Todo {
+    @Sendable func getById(req: Request) async throws -> Todo {
         guard let todoId = req.parameters.get("todoId", as: UUID.self) else {
             throw Abort(.notFound)
         }
@@ -42,13 +42,13 @@ struct TodosController: RouteCollection {
         return todo
     }
     
-    func createTodo(req: Request) async throws -> Todo {
+    @Sendable func createTodo(req: Request) async throws -> Todo {
         let todo = try req.content.decode(Todo.self)
         try await todo.save(on: req.db)
         return todo
     }
     
-    func deleteTodo(req: Request) async throws -> Todo {
+    @Sendable func deleteTodo(req: Request) async throws -> Todo {
         guard let todoId = req.parameters.get("todoId", as: UUID.self) else {
             throw Abort(.notFound)
         }
@@ -62,7 +62,7 @@ struct TodosController: RouteCollection {
         return todo
     }
     
-    func updateTodo(req: Request) async throws -> Todo {
+    @Sendable func updateTodo(req: Request) async throws -> Todo {
         guard let todoId = req.parameters.get("todoId", as: UUID.self) else {
             throw Abort(.notFound)
         }
